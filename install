@@ -1,0 +1,38 @@
+#!/bin/bash
+
+set -e
+
+function add_if_not_exists() {
+  local kind="$1"
+  local to_add="$2"
+  local destination="$3"
+
+  if grep -Fxq "$to_add" "$destination"; then
+    echo "tmux_lib is already in your path"
+    exit 1
+  else
+    echo "Adding $kind..."
+    echo >> "$destination"
+    echo "# $kind" >> "$destination"
+    echo "$to_add" >> "$destination"
+  fi
+}
+
+rcfile="$HOME/.bashrc"
+tmux_lib_path_raw="$(realpath "$(dirname $0)")/bin/tmux_lib"
+tmux_lib_path="${tmux_lib_path_raw/#$HOME/\$HOME}"
+
+if [[ ! -f "$rcfile" ]]; then
+  echo "Couldn't find: $rcfile"
+  exit 1
+fi
+
+add_if_not_exists \
+  "Configuration for https://github.com/okkays/tmux_lib" \
+  "PATH=\"$(dirname $tmux_lib_path):\$PATH\"" \
+  "$rcfile"
+
+add_if_not_exists \
+  "Bindings for https://github.com/okkays/tmux_lib" \
+  ". \"$tmux_lib_path\"" \
+  "$rcfile"

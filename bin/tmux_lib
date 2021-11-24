@@ -1,6 +1,14 @@
 #!/bin/bash
 
 function __tmux_lib_main() {
+  local usage
+
+  read -r -d '' usage <<-EOF
+    $usage\n
+tmux_lib botright
+\tGets a string for displaying in tmuxline with VCS information for the current
+\tpane.
+EOF
   function tmux_botright() {
     local path="$(tmux display-message -p "#{pane_current_path}")"
     git --git-dir="$path/.git" rev-parse --abbrev-ref HEAD
@@ -13,13 +21,20 @@ function __tmux_lib_main() {
     fi
   }
 
+
+  read -r -d '' usage <<-EOF
+    $usage\n
+tmux_lib session_scrollback
+\tDumps all of the scrollback for the current session.
+\tIncludes scrollback from all windows and panes.
+EOF
   function session_scrollback() {
     tmux list-windows -F '#{window_id}' | \
       xargs -n 1 tmux list-panes -F '#{pane_id}' -t | \
       xargs -n 1 tmux capture-pane -p -t
   }
 
-  function _echo_file_if_exists() {
+  function echo_file_if_exists() {
     while read -r maybe_file; do
       if [[ ! -f "${maybe_file%%:*}" ]]; then
         continue
@@ -32,14 +47,25 @@ function __tmux_lib_main() {
     done
   }
 
+  read -r -d '' usage <<-EOF
+    $usage\n
+tmux_lib session_files
+\tGets a list of files available in the session scrollback.
+\tFiles must exist relative to the current directory.
+EOF
   function session_files() {
     session_scrollback | \
       grep -Eo "[A-Za-z0-9\._\-\/:]+" | \
       sed "s|~|$HOME|g" | \
-      _echo_file_if_exists | \
+      echo_file_if_exists | \
       awk '!seen[$0]++' # Keep unique output.
   }
 
+  read -r -d '' usage <<-EOF
+    $usage\n
+tmux_lib session_scrollback_actions
+\tGets a list of actions to run based on the session scrollback.
+EOF
   function session_scrollback_actions() {
     session_scrollback | \
       tr -d '\n' | \
@@ -65,7 +91,7 @@ function __tmux_lib_main() {
       ;;
 
     *)
-      echo 'Invalid command! Supply session_scrollback, session_files, session_scrollback_actions, or botright'
+      printf "Usage:$usage\n\n"
       ;;
   esac
 }
@@ -76,7 +102,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   exit $?
 fi
 
-# c-g to find scrollback actions
 function __fzf_scrollback_actions() {
   tmux_lib session_scrollback_actions | fzf
 }
