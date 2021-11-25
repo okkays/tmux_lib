@@ -6,10 +6,11 @@ function add_if_not_exists() {
   local kind="$1"
   local to_add="$2"
   local destination="$3"
+  local binary="$4"
 
   if grep -Fxq "$to_add" "$destination"; then
-    echo "tmux_lib is already in your path"
-    exit 1
+    echo "$binary is already in your path"
+    return 0
   else
     echo "Adding $kind..."
     echo >> "$destination"
@@ -19,8 +20,9 @@ function add_if_not_exists() {
 }
 
 rcfile="$HOME/.bashrc"
-tmux_lib_path_raw="$(realpath "$(dirname $0)")/bin/tmux_lib"
-tmux_lib_path="${tmux_lib_path_raw/#$HOME/\$HOME}"
+binary=tmux_lib
+binary_path_raw="$(realpath "$(dirname $0)")/bin/$binary"
+binary_path="${binary_path_raw/#$HOME/\$HOME}"
 
 if [[ ! -f "$rcfile" ]]; then
   echo "Couldn't find: $rcfile"
@@ -28,11 +30,13 @@ if [[ ! -f "$rcfile" ]]; then
 fi
 
 add_if_not_exists \
-  "Configuration for https://github.com/okkays/tmux_lib" \
-  "PATH=\"$(dirname $tmux_lib_path):\$PATH\"" \
-  "$rcfile"
+  "Configuration for https://github.com/okkays/$binary" \
+  "PATH=\"$(dirname $binary_path):\$PATH\"" \
+  "$rcfile" \
+  "$binary"
 
 add_if_not_exists \
-  "Bindings for https://github.com/okkays/tmux_lib" \
-  ". \"$tmux_lib_path\"" \
-  "$rcfile"
+  "Bindings for https://github.com/okkays/$binary" \
+  ". \"$binary_path\"" \
+  "$rcfile" \
+  "$binary"
